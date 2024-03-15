@@ -12,7 +12,7 @@ public class ParticleUtils {
             Particle particle = new Particle(
                     p,
                     new Coordinate(generateRandom(0 , l),generateRandom(0 , l)),
-                    generateRandom(0, 360)
+                    generateRandom(0, 2 * Math.PI)
             );
 
             particles.add(particle);

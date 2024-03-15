@@ -50,16 +50,13 @@ public class OffLatticeSimulation {
         oldPos.setY( posWrapping( oldPos.getY() + Math.sin(p.getAngle()) * v ) );
 
         // Updateamos el angulo
-        double sinTotal = 0;
-        double cosTotal = 0;
+        double sinTotal = Math.sin(p.getAngle());
+        double cosTotal = Math.cos(p.getAngle());
         for(Particle neighbor: neighbors){
             sinTotal += Math.sin(neighbor.getAngle());
             cosTotal += Math.cos(neighbor.getAngle());
         }
-        sinTotal += Math.sin(p.getAngle());
-        cosTotal += Math.cos(p.getAngle());
-        double rand = generateNoise();
-        p.setAngle(Math.atan2(sinTotal / (neighbors.size() + 1), cosTotal / (neighbors.size() + 1)) + rand);
+        p.setAngle(Math.atan2(sinTotal / (neighbors.size() + 1), cosTotal / (neighbors.size() + 1)) + generateNoise());
     }
 
     public double calculatePolarization(){
@@ -84,8 +81,6 @@ public class OffLatticeSimulation {
     }
 
     private double generateNoise(){
-        double upper = noiseAmplitude / 2;
-        double lower = - upper;
-        return lower + (upper - lower) * random.nextDouble();
+        return noiseAmplitude * (random.nextDouble() - 0.5);
     }
 }
