@@ -1,4 +1,4 @@
-public class Coordinate {
+public class Coordinate implements Cloneable{
     private double x;
     private double y;
 
@@ -29,5 +29,10 @@ public class Coordinate {
 
     public void setY(double y) {
         this.y = y;
+    }
+
+    @Override
+    public Coordinate clone() {
+        return new Coordinate(x,y);
     }
 }

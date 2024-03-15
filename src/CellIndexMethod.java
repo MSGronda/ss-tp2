@@ -170,7 +170,7 @@ public class CellIndexMethod {
         public static boolean isInRadius(Particle centerParticle, Particle otherParticle, Coordinate displacement, double r){
             return Math.sqrt(
                     Math.pow((centerParticle.getPos().getX() + displacement.getX() - otherParticle.getPos().getX()), 2)+ (Math.pow((centerParticle.getPos().getY() + displacement.getY() - otherParticle.getPos().getY()), 2)
-                    )) - centerParticle.getRadius() - otherParticle.getRadius() <= r;
+                    ))  <= r;
         }
 
     }
