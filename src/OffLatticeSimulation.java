@@ -83,4 +83,8 @@ public class OffLatticeSimulation {
     private double generateNoise(){
         return noiseAmplitude * (random.nextDouble() - 0.5);
     }
+
+    public double getV() {
+        return v;
+    }
 }
