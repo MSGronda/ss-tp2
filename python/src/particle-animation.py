@@ -63,6 +63,6 @@ fig, ax = plt.subplots(figsize=(8, 6))
 
 ani = FuncAnimation(fig, update, frames=len(timesteps), interval=100)
 
-ani.save('particle_animation.gif', writer='pillow')
+ani.save('../animations/particle_animation.gif', writer='pillow')
 
 plt.show()
