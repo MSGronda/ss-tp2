@@ -4,9 +4,9 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        OffLatticeSimulation simulation = new OffLatticeSimulation(100,5, 0.25, 0.1, 0.1);
+        OffLatticeSimulation simulation = new OffLatticeSimulation(100,5, 0.1, 0.06, 0.1);
         try(FileWriter writer = new FileWriter("./python/output-files/particle-movement.txt")) {
-            for(int i=0; i<100; i++){
+            for(int i=0; i<1000; i++){
                 writer.write(i + ",\n");
                 List<Particle> particles = simulation.simulate();
 
@@ -14,7 +14,7 @@ public class Main {
                     writer.write(p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "," + simulation.getV() + "\n");
                 }
                 writer.write("\n");
-
+                System.out.println(simulation.calculatePolarization());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

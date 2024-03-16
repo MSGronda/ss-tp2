@@ -56,7 +56,7 @@ public class OffLatticeSimulation {
             sinTotal += Math.sin(neighbor.getAngle());
             cosTotal += Math.cos(neighbor.getAngle());
         }
-        p.setAngle(Math.atan2(sinTotal / (neighbors.size() + 1), cosTotal / (neighbors.size() + 1)) + generateNoise());
+        p.setAngle( angleWrapping( Math.atan2(sinTotal / (neighbors.size() + 1), cosTotal / (neighbors.size() + 1)) + generateNoise() ) );
     }
 
     public double calculatePolarization(){
@@ -67,6 +67,17 @@ public class OffLatticeSimulation {
             ySum += Math.sin(p.getAngle()) * v;
         }
         return (Math.sqrt(xSum * xSum + ySum * ySum)) / (n * v);
+    }
+
+    private double angleWrapping(double angle) {
+        double newAngle = angle;
+        while (newAngle > Math.PI){
+            newAngle -= 2*Math.PI;
+        }
+        while (newAngle < -Math.PI){
+            newAngle += 2*Math.PI;
+        }
+        return newAngle;
     }
 
     private double posWrapping(double pos){
