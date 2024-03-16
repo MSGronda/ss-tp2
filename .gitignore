@@ -1,7 +1,12 @@
 # Compiled class file
 *.class
 
+*.gif
+*.txt
+.idea
+out
 *.xml
+*.iml
 
 # Log file
 *.log
