@@ -44,7 +44,7 @@ public class Particle implements Cloneable{
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, pos);
+        return Objects.hash(id);
     }
 
     public int getId() {

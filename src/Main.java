@@ -4,9 +4,9 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        OffLatticeSimulation simulation = new OffLatticeSimulation(100,5, 0.1, 0.06, 0.1);
+        OffLatticeSimulation simulation = new OffLatticeSimulation(100,5, 0.25, 0.1, 0.1);
         try(FileWriter writer = new FileWriter("./python/output-files/particle-movement.txt")) {
-            for(int i=0; i<1000; i++){
+            for(int i=0; i<500; i++){
                 writer.write(i + ",\n");
                 List<Particle> particles = simulation.simulate();
 
