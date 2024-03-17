@@ -1,4 +1,6 @@
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.stream.Collectors;
 
 public class OffLatticeSimulation {
@@ -98,4 +100,85 @@ public class OffLatticeSimulation {
     public double getV() {
         return v;
     }
+
+
+    ///////////////////////// MULTITHREADING ///////////////////////////////
+    private ExecutorService pool = null;
+    private Map<Particle, Set<Particle>> neighbors;
+    private List<Particle> newParticles;
+    private List<UpdateParticleTask> updateTasks = null;
+
+    private class UpdateParticleTask implements Callable<Integer> {
+        private int from;
+        private int to;
+        public UpdateParticleTask(int from, int to){
+            this.from = from;
+            this.to = to;
+        }
+
+        @Override
+        public Integer call() {
+            if(newParticles == null) {
+                return -1;
+            }
+            Iterator<Particle> iterator = newParticles.listIterator(from);
+
+            int count = 0;
+            while(iterator.hasNext() && count < to - from){
+                Particle p = iterator.next();
+                Set<Particle> pNeighbors  = neighbors.getOrDefault(p, new HashSet<>());
+                updateParticle(p, pNeighbors);
+                count++;
+            }
+            return count;
+        }
+    }
+
+    public void setupParallel(int threadCount) {
+        pool = Executors.newCachedThreadPool();
+        updateTasks = new ArrayList<>();
+
+        int particlesPerThread = particles.size()/threadCount;
+        for(int i=0; i<threadCount; i++){
+            if(i==threadCount-1){
+                updateTasks.add(new UpdateParticleTask(i * particlesPerThread, particles.size()));
+            }
+            else{
+                updateTasks.add(new UpdateParticleTask(i * particlesPerThread, (i+1) * particlesPerThread));
+            }
+        }
+
+    }
+
+    public List<Particle> simulateParallel() {
+        if(pool == null){
+            throw new RuntimeException("Inicializamelo");
+        }
+
+        CellIndexMethod.setPeriodicPlane(true);
+
+        // Calculamos los neighbors de forma paralela
+        this.neighbors = CellIndexMethod.computeNeighborsParallel(particles, l, m, r, pool, updateTasks.size());
+
+        this.newParticles = particles.stream().map(Particle::clone).collect(Collectors.toList());
+
+        // Updateamos las particulas de forma paralela
+        try{
+            pool.invokeAll(updateTasks);
+        }
+        catch (InterruptedException e){
+            System.out.println(e);
+        }
+
+        particles = newParticles;
+        return newParticles;
+    }
+
+    public void finishParallel(){
+        if(pool != null){
+            pool.shutdown();
+        }
+    }
+
+    ////////////////////////////////////////////////////////
 }
