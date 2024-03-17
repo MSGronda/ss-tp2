@@ -1,9 +1,5 @@
-import javax.naming.directory.InvalidAttributesException;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class CellIndexMethod {
@@ -67,25 +63,26 @@ public class CellIndexMethod {
 
     ///////////////////////// MULTITHREADING ///////////////////////////////
 
-    private static class ComputeCimTask implements Callable<Map<Particle, Set<Particle>>> {
+    private static class ComputeCimTask implements Callable<Integer> {
         private int from;
         private int to;
         private List<Particle> particles;
         private CellGrid grid;
         private double r;
 
-        public ComputeCimTask(int from, int to, List<Particle> particles, CellGrid grid, double r){
+        private Map<Particle, Set<Particle>> neighborMap;
+
+        public ComputeCimTask(int from, int to, List<Particle> particles, CellGrid grid, double r, Map<Particle, Set<Particle>> neighborMap){
             this.from = from;
             this.to = to;
             this.particles = particles;
             this.grid = grid;
             this.r = r;
+            this.neighborMap = neighborMap;
         }
 
         @Override
-        public Map<Particle, Set<Particle>> call() {
-            Map<Particle, Set<Particle>> neighborMap = new HashMap<>();
-
+        public Integer call() {
             Iterator<Particle> particleIterator = particles.listIterator(from);
             int count = 0;
             while(particleIterator.hasNext() && count < to - from) {
@@ -119,17 +116,17 @@ public class CellIndexMethod {
                 }
 
                 if(!neighbors.isEmpty()){
-                    neighborMap.putIfAbsent(particle, new HashSet<>());
+                    neighborMap.putIfAbsent(particle, ConcurrentHashMap.newKeySet());       // IMPORTANTISIMO que sea un concurrent hash set
                     neighborMap.get(particle).addAll(neighbors);
 
                     // Debemos agregar entries tmb para los neighbors
                     neighbors.forEach(other -> {
-                        neighborMap.putIfAbsent(other, new HashSet<>());
+                        neighborMap.putIfAbsent(other, ConcurrentHashMap.newKeySet());      // IMPORTANTISIMO que sea un concurrent hash set
                         neighborMap.get(other).add(particle);
                     });
                 }
             }
-            return neighborMap;
+            return 1;
         }
     }
 
@@ -139,28 +136,21 @@ public class CellIndexMethod {
 
         List<ComputeCimTask> cimTasks = new ArrayList<>();
 
+        Map<Particle, Set<Particle>> neighborMap = new ConcurrentHashMap<>();       // IMPORTANTISIMO que sea un concurrent hash map.
+
         int particlesPerThread = particles.size()/threadCount;
         for(int i=0; i<threadCount; i++){
             if(i==threadCount-1){
-                cimTasks.add(new ComputeCimTask(i * particlesPerThread, particles.size(), particles, grid, r));
+                cimTasks.add(new ComputeCimTask(i * particlesPerThread, particles.size(), particles, grid, r, neighborMap));
             }
             else{
-                cimTasks.add(new ComputeCimTask(i * particlesPerThread, (i+1) * particlesPerThread, particles, grid, r));
+                cimTasks.add(new ComputeCimTask(i * particlesPerThread, (i+1) * particlesPerThread, particles, grid, r, neighborMap));
             }
         }
 
-        Map<Particle, Set<Particle>> neighborMap = new HashMap<>();
         try{
-            List<Future<Map<Particle, Set<Particle>>>> resps =  pool.invokeAll(cimTasks);
-
-            for(Future<Map<Particle, Set<Particle>>> mapFuture : resps){
-                Map<Particle, Set<Particle>> localMap = mapFuture.get();
-                for(Map.Entry<Particle, Set<Particle>> entry : localMap.entrySet()){
-                    neighborMap.putIfAbsent(entry.getKey(), new HashSet<>());
-                    neighborMap.get(entry.getKey()).addAll(entry.getValue());
-                }
-            }
-        } catch (InterruptedException | ExecutionException e) {
+            pool.invokeAll(cimTasks);
+        } catch (InterruptedException e) {
             System.out.println(e);
         }
 
