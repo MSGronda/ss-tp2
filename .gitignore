@@ -2,6 +2,7 @@
 *.class
 
 *.gif
+*.mp4
 *.txt
 .idea
 out
