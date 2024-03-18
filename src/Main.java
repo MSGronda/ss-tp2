@@ -7,8 +7,31 @@ import java.util.concurrent.BlockingQueue;
 
 public class Main {
     public static void main(String[] args) {
-        long timeTaken = runParallel(25000,250, 5, 0.2, 0.5, 1000, 10);
+        int n = 100;
+        double l = 5;
+        double r = 0.25;
+        double v = 0.03;
+        double noiseAmplitude = 0.5;
+        int epochs = 100;
+
+        writeStaticFile(n,l,r,v,noiseAmplitude, epochs);
+
+        long timeTaken = runSemiParallel(n,l,r,v,noiseAmplitude, epochs, 10);
         System.out.println("Time taken: " + timeTaken/1000 + "s");
+    }
+
+    public static void writeStaticFile(int n, double l, double r, double v, double noiseAmplitude, int epochs){
+        try(FileWriter writer = new FileWriter("./python/output-files/static-data.txt")) {
+            writer.write("n," + n + "\n");
+            writer.write("v," + v+ "\n");
+            writer.write("l," + l + "\n");
+            writer.write("rc," + r + "\n");
+            writer.write("noiseAmplitude," + noiseAmplitude + "\n");
+            writer.write("epochs," + epochs + "\n");
+        }
+        catch (IOException e){
+            System.out.println(e);
+        }
     }
     public static long runNormal(int n, double l, double r, double v, double noiseAmplitude, int epochs) {
         long start = System.currentTimeMillis();
@@ -20,7 +43,7 @@ public class Main {
 
                 writer.write(i + ",\n");
                 for( Particle p : particles){
-                    writer.write(p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "," + simulation.getV() + "\n");
+                    writer.write(p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
                 }
                 writer.write("\n");
             }
@@ -43,8 +66,8 @@ public class Main {
                 List<Particle> particles = simulation.simulateParallel();
 
                 writer.write(i + ",\n");
-                for( Particle p : particles){
-                    writer.write(p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "," + simulation.getV() + "\n");
+                for(Particle p : particles){
+                    writer.write(p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
                 }
                 writer.write("\n");
             }
@@ -63,7 +86,6 @@ public class Main {
         OffLatticeSimulation simulation = new OffLatticeSimulation(n,l, r, v, noiseAmplitude);
 
         IOThread task = new IOThread();
-        task.v = simulation.getV();
         Thread thread = new Thread(task);
         thread.start();
 
@@ -90,7 +112,6 @@ public class Main {
     public static class IOThread implements Runnable {
         private final BlockingQueue<List<Particle>> writes = new ArrayBlockingQueue<>(20);// TODO: check
         private boolean finished = false;
-        private double v;
 
         @Override
         public void run() {
@@ -102,7 +123,7 @@ public class Main {
 
                     writer.write(i + ",\n");
                     for(Particle p : particles){
-                        writer.write(p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "," + v + "\n");
+                        writer.write(p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
                     }
                     writer.write("\n");
 

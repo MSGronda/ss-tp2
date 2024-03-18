@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 
+from src.utils import get_static_data
+
+
 def angle_to_color(angle):
     hue = angle * 180 / np.pi
     hue = (hue + 180) % 360
@@ -8,9 +11,12 @@ def angle_to_color(angle):
     return cv2.cvtColor(np.array([[[hue, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)[0][0].tolist()
 
 
-size_multiplier = 2
+static_data = get_static_data('../output-files/static-data.txt')
+
+size_multiplier = 100
 fps = 30
-width, height = 500 * size_multiplier, 500 * size_multiplier
+screen_size = int(static_data['l'])
+width, height = screen_size * size_multiplier, screen_size * size_multiplier
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
 out = cv2.VideoWriter('../animations/simulation_video.mp4', fourcc, fps, (width, height))

@@ -2,14 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+from src.utils import get_static_data
+
 with open('../output-files/particle-movement.txt', 'r') as file:
     lines = file.readlines()
+
+static_data = get_static_data('../output-files/static-data.txt')
 
 timesteps = []
 x_values = []
 y_values = []
-dx_values = []
-dy_values = []
+velocity = static_data['v']
 
 for line in lines:
     if line.strip() == '':
@@ -29,14 +32,13 @@ for line in lines:
     data = line.split(',')
     x = float(data[0])
     y = float(data[1])
-    angle = float(data[2])
-    velocity = float(data[3])
+    x_values.append(x)
+    y_values.append(y)
 
+    angle = float(data[2])
     dx = velocity * np.cos(angle)
     dy = velocity * np.sin(angle)
 
-    x_values.append(x)
-    y_values.append(y)
     dx_values.append(dx)
     dy_values.append(dy)
 
@@ -56,8 +58,8 @@ def update(frame):
     ax.set_ylabel('Y Coordinate')
     ax.grid(True)
     ax.set_aspect('equal', adjustable='box')
-    ax.set_xlim(0, 5)
-    ax.set_ylim(0, 5)
+    ax.set_xlim(0, int(static_data['l']))
+    ax.set_ylim(0, int(static_data['l']))
     for i in range(len(timesteps[frame][0])):
         x = timesteps[frame][0][i]
         y = timesteps[frame][1][i]
