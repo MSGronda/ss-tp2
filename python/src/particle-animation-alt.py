@@ -19,7 +19,7 @@ angle_color = True
 # Comienzo
 static_data = get_static_data('../output-files/static-data.txt')
 
-size_multiplier = 100
+size_multiplier = 4
 fps = 30
 screen_size = int(static_data['l'])
 width, height = screen_size * size_multiplier, screen_size * size_multiplier

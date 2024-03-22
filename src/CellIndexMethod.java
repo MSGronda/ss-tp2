@@ -15,6 +15,44 @@ public class CellIndexMethod {
         return periodicPlane;
     }
 
+    public static void computeParticleNeighbors(CellGrid grid, Particle particle, Map<Particle, Set<Particle>> neighborMap, double r){
+        Coordinate cellCoord = grid.getCellNumber(particle);
+        int i = (int) cellCoord.getY();
+        int j = (int) cellCoord.getX();
+
+        // Este set contiene todos los neighbors validos.
+        // Asumimos que los que estan en el mismo cell caen por dentro (dado que m = l / r)
+        Set<Particle> neighbors = grid.getCell(i, j).getParticles().stream().filter(p -> !p.equals(particle) && p.isInRadius(particle, r)).collect(Collectors.toSet());
+
+        // Arriba
+        if(grid.validCell(i-1, j)) {
+            neighbors.addAll(grid.getParticlesWithinRadius(particle,i-1, j, r));
+        }
+        // Diagonal arriba a la derecha
+        if(grid.validCell(i-1, j+1)) {
+            neighbors.addAll(grid.getParticlesWithinRadius(particle, i-1,j+1, r));
+        }
+        // A la derecha
+        if(grid.validCell(i, j+1)) {
+            neighbors.addAll(grid.getParticlesWithinRadius(particle, i,j+1, r));
+        }
+        // Diagonal abajo a la derecha
+        if(grid.validCell(i+1, j+1)) {
+            neighbors.addAll(grid.getParticlesWithinRadius(particle, i+1,j+1, r));
+        }
+
+        if(!neighbors.isEmpty()){
+            neighborMap.putIfAbsent(particle, ConcurrentHashMap.newKeySet());       // IMPORTANTISIMO que sea un concurrent hash set
+            neighborMap.get(particle).addAll(neighbors);
+
+            // Debemos agregar entries tmb para los neighbors
+            neighbors.forEach(other -> {
+                neighborMap.putIfAbsent(other, ConcurrentHashMap.newKeySet());      // IMPORTANTISIMO que sea un concurrent hash set
+                neighborMap.get(other).add(particle);
+            });
+        }
+    }
+
     public static Map<Particle, Set<Particle>> computeNeighbors(List<Particle> particles, double planeWidth, int gridWidth, double r){
 
         CellGrid grid = new CellGrid(particles, gridWidth, planeWidth);
@@ -22,137 +60,19 @@ public class CellIndexMethod {
         Map<Particle, Set<Particle>> neighborMap = new HashMap<>();
 
         for(Particle particle : particles) {
-            Coordinate cellCoord = grid.getCellNumber(particle);
-            int i = (int) cellCoord.getY();
-            int j = (int) cellCoord.getX();
-
-            // Este set contiene todos los neighbors validos.
-            // Asumimos que los que estan en el mismo cell caen por dentro (dado que m = l / r)
-            Set<Particle> neighbors = grid.getCell(i, j).getParticles().stream().filter(p -> !p.equals(particle) && p.isInRadius(particle, r)).collect(Collectors.toSet());
-
-            // Arriba
-            if(grid.validCell(i-1, j)) {
-                neighbors.addAll(grid.getParticlesWithinRadius(particle,i-1, j, r));
-            }
-            // Diagonal arriba a la derecha
-            if(grid.validCell(i-1, j+1)) {
-                neighbors.addAll(grid.getParticlesWithinRadius(particle, i-1,j+1, r));
-            }
-            // A la derecha
-            if(grid.validCell(i, j+1)) {
-                neighbors.addAll(grid.getParticlesWithinRadius(particle, i,j+1, r));
-            }
-            // Diagonal abajo a la derecha
-            if(grid.validCell(i+1, j+1)) {
-                neighbors.addAll(grid.getParticlesWithinRadius(particle, i+1,j+1, r));
-            }
-
-            if(!neighbors.isEmpty()){
-                neighborMap.putIfAbsent(particle, new HashSet<>());
-                neighborMap.get(particle).addAll(neighbors);
-
-                // Debemos agregar entries tmb para los neighbors
-                neighbors.forEach(other -> {
-                    neighborMap.putIfAbsent(other, new HashSet<>());
-                    neighborMap.get(other).add(particle);
-                });
-            }
+            computeParticleNeighbors(grid, particle, neighborMap, r);
         }
         return neighborMap;
     }
 
-    ///////////////////////// MULTITHREADING ///////////////////////////////
 
-    private static class ComputeCimTask implements Callable<Integer> {
-        private int from;
-        private int to;
-        private List<Particle> particles;
-        private CellGrid grid;
-        private double r;
-
-        private Map<Particle, Set<Particle>> neighborMap;
-
-        public ComputeCimTask(int from, int to, List<Particle> particles, CellGrid grid, double r, Map<Particle, Set<Particle>> neighborMap){
-            this.from = from;
-            this.to = to;
-            this.particles = particles;
-            this.grid = grid;
-            this.r = r;
-            this.neighborMap = neighborMap;
-        }
-
-        @Override
-        public Integer call() {
-            Iterator<Particle> particleIterator = particles.listIterator(from);
-            int count = 0;
-            while(particleIterator.hasNext() && count < to - from) {
-
-                Particle particle = particleIterator.next();
-                count++;
-
-                Coordinate cellCoord = grid.getCellNumber(particle);
-                int i = (int) cellCoord.getY();
-                int j = (int) cellCoord.getX();
-
-                // Este set contiene todos los neighbors validos.
-                // Asumimos que los que estan en el mismo cell caen por dentro (dado que m = l / r)
-                Set<Particle> neighbors = grid.getCell(i, j).getParticles().stream().filter(p -> !p.equals(particle) && p.isInRadius(particle, r)).collect(Collectors.toSet());
-
-                // Arriba
-                if(grid.validCell(i-1, j)) {
-                    neighbors.addAll(grid.getParticlesWithinRadius(particle,i-1, j, r));
-                }
-                // Diagonal arriba a la derecha
-                if(grid.validCell(i-1, j+1)) {
-                    neighbors.addAll(grid.getParticlesWithinRadius(particle, i-1,j+1, r));
-                }
-                // A la derecha
-                if(grid.validCell(i, j+1)) {
-                    neighbors.addAll(grid.getParticlesWithinRadius(particle, i,j+1, r));
-                }
-                // Diagonal abajo a la derecha
-                if(grid.validCell(i+1, j+1)) {
-                    neighbors.addAll(grid.getParticlesWithinRadius(particle, i+1,j+1, r));
-                }
-
-                if(!neighbors.isEmpty()){
-                    neighborMap.putIfAbsent(particle, ConcurrentHashMap.newKeySet());       // IMPORTANTISIMO que sea un concurrent hash set
-                    neighborMap.get(particle).addAll(neighbors);
-
-                    // Debemos agregar entries tmb para los neighbors
-                    neighbors.forEach(other -> {
-                        neighborMap.putIfAbsent(other, ConcurrentHashMap.newKeySet());      // IMPORTANTISIMO que sea un concurrent hash set
-                        neighborMap.get(other).add(particle);
-                    });
-                }
-            }
-            return 1;
-        }
-    }
-
-    public static Map<Particle, Set<Particle>> computeNeighborsParallel(List<Particle> particles, double planeWidth, int gridWidth, double r, ExecutorService pool, int threadCount){
+    public static Map<Particle, Set<Particle>> computeNeighborsParallel(List<Particle> particles, double planeWidth, int gridWidth, double r){
 
         CellGrid grid = new CellGrid(particles, gridWidth, planeWidth);
 
-        List<ComputeCimTask> cimTasks = new ArrayList<>();
-
         Map<Particle, Set<Particle>> neighborMap = new ConcurrentHashMap<>();       // IMPORTANTISIMO que sea un concurrent hash map.
 
-        int particlesPerThread = particles.size()/threadCount;
-        for(int i=0; i<threadCount; i++){
-            if(i==threadCount-1){
-                cimTasks.add(new ComputeCimTask(i * particlesPerThread, particles.size(), particles, grid, r, neighborMap));
-            }
-            else{
-                cimTasks.add(new ComputeCimTask(i * particlesPerThread, (i+1) * particlesPerThread, particles, grid, r, neighborMap));
-            }
-        }
-
-        try{
-            pool.invokeAll(cimTasks);
-        } catch (InterruptedException e) {
-            System.out.println(e);
-        }
+        particles.parallelStream().forEach(p -> computeParticleNeighbors(grid, p, neighborMap, r));
 
         return neighborMap;
     }
