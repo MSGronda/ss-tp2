@@ -7,27 +7,37 @@ import java.util.concurrent.BlockingQueue;
 
 public class Main {
     public static void main(String[] args) {
-        int n = 25000;
-        double l = 250;
-        double r = 5;
+        int n = 300;
+        double l = 5;
+        double r = 0.25;
         double v = 0.1;
-        double noiseAmplitude = 0.1;
+        double noiseAmplitude = 0.0;
         int epochs = 1000;
 
-        writeStaticFile(n,l,r,v,noiseAmplitude, epochs);
 
-        long timeTaken = runParallel(n,l,r,v,noiseAmplitude, epochs);
-        System.out.println("Time taken: " + timeTaken/1000 + "s");
+
+        for(int i=0; i<25; i++){
+            noiseAmplitude += 0.2;
+
+            long timestamp = System.currentTimeMillis();
+            writeStaticFile(n,l,r,v,noiseAmplitude, epochs, timestamp);
+
+            long timeTaken = runSemiParallel(n,l,r,v,noiseAmplitude, epochs, timestamp);
+            System.out.println("Time taken: " + timeTaken/1000 + "s");
+        }
+
+
     }
 
-    public static void writeStaticFile(int n, double l, double r, double v, double noiseAmplitude, int epochs){
-        try(FileWriter writer = new FileWriter("./python/output-files/static-data.txt")) {
+    public static void writeStaticFile(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp){
+        try(FileWriter writer = new FileWriter("./python/output-files/static-data-" + timestamp + ".txt")) {
             writer.write("n," + n + "\n");
             writer.write("v," + v+ "\n");
             writer.write("l," + l + "\n");
             writer.write("rc," + r + "\n");
             writer.write("noiseAmplitude," + noiseAmplitude + "\n");
             writer.write("epochs," + epochs + "\n");
+            writer.write("density" + (float) n / (l*l) + "\n");
         }
         catch (IOException e){
             System.out.println(e);
@@ -36,11 +46,11 @@ public class Main {
 
 
 
-    public static long runNormal(int n, double l, double r, double v, double noiseAmplitude, int epochs) {
+    public static long runNormal(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
         long start = System.currentTimeMillis();
         OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
 
-        try (FileWriter writer = new FileWriter("./python/output-files/particle-movement.txt")) {
+        try (FileWriter writer = new FileWriter("./python/output-files/particle-movement-" + timestamp + ".txt")) {
             for (int i = 0; i < epochs; i++) {
                 List<Particle> particles = simulation.simulate();
 
@@ -57,12 +67,12 @@ public class Main {
         return end - start;
     }
 
-    public static long runSemiParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs) {
+    public static long runSemiParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
 
         long start = System.currentTimeMillis();
         OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
 
-        try (FileWriter writer = new FileWriter("./python/output-files/particle-movement.txt")) {
+        try (FileWriter writer = new FileWriter("./python/output-files/particle-movement-" + timestamp + ".txt")) {
             for (int i = 0; i < epochs; i++) {
                 List<Particle> particles = simulation.simulateParallel();
 
@@ -80,12 +90,12 @@ public class Main {
         return end - start;
     }
 
-    public static long runParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs) {
+    public static long runParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
 
         long start = System.currentTimeMillis();
         OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
 
-        IOThread task = new IOThread();
+        IOThread task = new IOThread(timestamp);
         Thread thread = new Thread(task);
         thread.start();
 
@@ -108,12 +118,16 @@ public class Main {
     public static class IOThread implements Runnable {
         private final BlockingQueue<List<Particle>> writes = new ArrayBlockingQueue<>(20);// TODO: check
         private boolean finished = false;
+        private final long timestamp;
+        public IOThread(long timestamp){
+            this.timestamp = timestamp;
+        }
 
         @Override
         public void run() {
             int i = 0;
 
-            try (FileWriter writer = new FileWriter("./python/output-files/particle-movement.txt")) {
+            try (FileWriter writer = new FileWriter("./python/output-files/particle-movement-" + timestamp + ".txt")) {
                 while (!finished) {
                     List<Particle> particles = writes.take();
 
@@ -131,50 +145,6 @@ public class Main {
         }
         public void endThread() {
             finished = true;
-        }
-    }
-
-    public static void polarizationChange(int n, double l, double r, double v, double noiseAmplitude, int epochs, int threadCount) {
-        try (FileWriter writer = new FileWriter("./python/output-files/polarization-change.txt")) {
-            writer.write("t, va\n");
-
-            OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
-            double polarization = simulation.calculatePolarization();
-
-            writer.write("0," + polarization + "\n");
-
-            for (int i = 0; i < epochs; i++) {
-                simulation.simulateParallel();
-
-                polarization = simulation.calculatePolarization();
-
-                writer.write(i + 1 + "," + polarization + "\n");
-            }
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static void comparePolarization(int n, double l, double r, double v, int epochs, int threadCount) {
-        try (FileWriter writer = new FileWriter("./python/output-files/polarization-with-noise.txt")) {
-            writer.write("n, va\n");
-
-            for (double i = 0; i <= 5; i += 0.2) {
-                OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, i);
-
-                int j = 0;
-                while ( j < epochs ) {
-                    simulation.simulateParallel();
-
-                    if ( j >= 250){
-                        writer.write(i + "," + simulation.calculatePolarization() + "\n");
-                    }
-                    j++;
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 }

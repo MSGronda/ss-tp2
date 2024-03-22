@@ -70,16 +70,6 @@ public class OffLatticeSimulation {
         return newParticles;
     }
 
-    public double calculatePolarization(){
-        double xSum = 0;
-        double ySum = 0;
-        for(Particle p : particles){
-            xSum += Math.cos(p.getAngle()) * v;
-            ySum += Math.sin(p.getAngle()) * v;
-        }
-        return (Math.sqrt(xSum * xSum + ySum * ySum)) / (n * v);
-    }
-
     private double angleWrapping(double angle) {
         double newAngle = angle;
         while (newAngle > Math.PI){
