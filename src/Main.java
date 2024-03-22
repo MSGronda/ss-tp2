@@ -9,24 +9,20 @@ public class Main {
     public static void main(String[] args) {
         int n = 300;
         double l = 5;
-        double r = 0.25;
+        double r = 0.4;
         double v = 0.1;
         double noiseAmplitude = 0.0;
         int epochs = 1000;
 
-
-
-        for(int i=0; i<25; i++){
+        for(int i=0; i<20; i++){
             noiseAmplitude += 0.2;
 
             long timestamp = System.currentTimeMillis();
             writeStaticFile(n,l,r,v,noiseAmplitude, epochs, timestamp);
 
-            long timeTaken = runSemiParallel(n,l,r,v,noiseAmplitude, epochs, timestamp);
+            long timeTaken = runSemiParallel(n,l,r,v, noiseAmplitude, epochs, timestamp);
             System.out.println("Time taken: " + timeTaken/1000 + "s");
         }
-
-
     }
 
     public static void writeStaticFile(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp){
@@ -37,7 +33,7 @@ public class Main {
             writer.write("rc," + r + "\n");
             writer.write("noiseAmplitude," + noiseAmplitude + "\n");
             writer.write("epochs," + epochs + "\n");
-            writer.write("density" + (float) n / (l*l) + "\n");
+            writer.write("density," + (float) n / (l*l) + "\n");
         }
         catch (IOException e){
             System.out.println(e);

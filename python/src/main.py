@@ -15,8 +15,11 @@ if __name__ == '__main__':
         static_data.append(data)
         polarization.append(pol)
 
-        graph_polarization_time(pol)
 
-    compare_polarizations(polarization, static_data, 'noiseAmplitude', 600)
+    graph_multiple_polarization_time(
+        [polarization[0], polarization[5], polarization[10]],
+        [static_data[0], static_data[5], static_data[10]],
+        'noiseAmplitude'
+    )
 
 

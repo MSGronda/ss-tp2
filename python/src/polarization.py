@@ -41,6 +41,18 @@ def graph_polarization_time(polarization: []):
     plt.legend()
     plt.show()
 
+def graph_multiple_polarization_time(polarizations: [[]], static_datas: [{}], variable: str):
+    plt.figure(figsize=(8, 6))
+    for static_data, polarization in zip(static_datas, polarizations):
+        time = [i for i in range(0, len(polarization))]
+        plt.scatter(time, polarization, label=f'Polarization ({variable}={static_data[variable]})')
+    plt.title('Scatter Plot of Polarization vs. Time')
+    plt.xlabel('Time')
+    plt.ylabel('Polarization')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
 def compare_polarizations(polarizations: [[]], static_datas: [{}], variable: str ,starting: int):
 
     avg_polarizations = []
@@ -48,8 +60,9 @@ def compare_polarizations(polarizations: [[]], static_datas: [{}], variable: str
     parameters = []
 
     for polarization in polarizations:
-        avg_va = np.mean(polarization[starting:])
-        std_va = np.std(polarization[starting:])
+        cut = polarization[starting:]
+        avg_va = np.mean(cut)
+        std_va = np.std(cut)
 
         avg_polarizations.append(avg_va)
         std_deviations.append(std_va)
