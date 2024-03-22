@@ -1,5 +1,13 @@
+import concurrent.futures
 from src.polarization import *
 from src.utils import get_static_data
+
+
+def process_files(p, s):
+    data = get_static_data(s)
+    pol = calculate_polarization(p, data)
+    return data, pol
+
 
 if __name__ == '__main__':
     particle_files = get_all_files("../output-files/particle-movement")
@@ -8,18 +16,14 @@ if __name__ == '__main__':
     polarization = []
     static_data = []
 
-    for p, s in zip(particle_files, static_files):
-        data = get_static_data(s)
-        pol = calculate_polarization(p, data)
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        results = executor.map(process_files, particle_files, static_files)
 
-        static_data.append(data)
-        polarization.append(pol)
+        for data, pol in results:
+            static_data.append(data)
+            polarization.append(pol)
 
 
-    graph_multiple_polarization_time(
-        [polarization[0], polarization[5], polarization[10]],
-        [static_data[0], static_data[5], static_data[10]],
-        'noiseAmplitude'
-    )
+    compare_polarizations(polarization, static_data, 'noiseAmplitude', 500)
 
 
