@@ -3,7 +3,7 @@ import java.util.stream.Collectors;
 
 public class ParticleUtils {
 
-    private static final Random random = new Random();
+    private static final Random random = new Random(2);
 
     public static List<Particle> createParticles(int n, double l) {
         List<Particle> particles = new ArrayList<>();

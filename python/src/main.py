@@ -1,6 +1,6 @@
 from src.polarization import *
 
-from src.animation import generate_video, generate_gif
+from src.animation import generate_video, generate_gif, generate_video_counting_visits
 
 
 def compare_and_graph_polarization():
@@ -24,6 +24,13 @@ def generate_video_from_first():
     generate_video(particle_files[0], static_files[0], False, 100)
 
 
+def generate_video_with_visits_from_first():
+    particle_files = get_all_files("../output-files/particle-movement")
+    static_files = get_all_files("../output-files/static-data")
+    visit_files = get_all_files("../output-files/visits")
+
+    generate_video_counting_visits(particle_files[0], visit_files[0], static_files[0], False, 200)
+
 def generate_gif_from_first():
     particle_files = get_all_files("../output-files/particle-movement")
     static_files = get_all_files("../output-files/static-data")
@@ -32,6 +39,6 @@ def generate_gif_from_first():
 
 
 if __name__ == '__main__':
-    generate_gif_from_first()
+    generate_video_with_visits_from_first()
 
 

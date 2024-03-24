@@ -5,8 +5,6 @@ public class Particle implements Cloneable{
     private Coordinate pos;
     private double angle;
 
-    private static double velocity = 0.03;
-
     public Particle(int id, Coordinate pos, double angle) {
         this.id = id;
         this.pos = pos;
@@ -61,14 +59,6 @@ public class Particle implements Cloneable{
 
     public void setPos(Coordinate pos) {
         this.pos = pos;
-    }
-
-    public static void setVelocity(double velocity) {
-        Particle.velocity = velocity;
-    }
-
-    public static double getVelocity() {
-        return velocity;
     }
 
     public double getAngle() {
