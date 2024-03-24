@@ -7,15 +7,15 @@ import java.util.concurrent.BlockingQueue;
 
 public class Main {
     public static void main(String[] args) {
-        int n = 300;
+        int n = 10;
         double l = 5;
         double r = 0.4;
         double v = 0.1;
-        double noiseAmplitude = 0.0;
+        double noiseAmplitude = 0.5;
         int epochs = 1000;
 
-        for(int i=0; i<20; i++){
-            noiseAmplitude += 0.2;
+        for(int i=0; i<25; i++){
+            n += 15;
 
             long timestamp = System.currentTimeMillis();
             writeStaticFile(n,l,r,v,noiseAmplitude, epochs, timestamp);
@@ -39,8 +39,6 @@ public class Main {
             System.out.println(e);
         }
     }
-
-
 
     public static long runNormal(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
         long start = System.currentTimeMillis();

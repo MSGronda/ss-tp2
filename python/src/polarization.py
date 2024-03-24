@@ -1,7 +1,8 @@
-import os
+import concurrent.futures
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
+from src.utils import get_static_data
 
 
 def calculate_polarization(particles: str, static_data: {}) -> []:
@@ -30,30 +31,53 @@ def calculate_polarization(particles: str, static_data: {}) -> []:
     return polarization
 
 
+def process_files(p, s):
+    data = get_static_data(s)
+    pol = calculate_polarization(p, data)
+    return data, pol
+
+
+def calculate_all_polarizations():
+    particle_files = get_all_files("../output-files/particle-movement")
+    static_files = get_all_files("../output-files/static-data")
+
+    polarization = []
+    static_data = []
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        results = executor.map(process_files, particle_files, static_files)
+
+        for data, pol in results:
+            static_data.append(data)
+            polarization.append(pol)
+
+    return polarization, static_data
+
+
 def graph_polarization_time(polarization: []):
     plt.figure(figsize=(8, 6))
     time = [i for i in range(0, len(polarization))]
-    plt.scatter(time, polarization, color='blue', label='Polarization')
-    plt.title('Scatter Plot of Polarization vs. Time')
-    plt.xlabel('Time')
-    plt.ylabel('Polarization')
+    plt.scatter(time, polarization, color='blue', label='Polarizacion')
+    plt.xlabel('Tiempo')
+    plt.ylabel('Polarizacion')
     plt.grid(True)
     plt.legend()
     plt.show()
 
-def graph_multiple_polarization_time(polarizations: [[]], static_datas: [{}], variable: str):
-    plt.figure(figsize=(8, 6))
+
+def graph_multiple_polarization_time(polarizations: [[]], static_datas: [{}], variable: str, variable_name: str):
+    plt.figure(figsize=(10, 6))
     for static_data, polarization in zip(static_datas, polarizations):
         time = [i for i in range(0, len(polarization))]
-        plt.scatter(time, polarization, label=f'Polarization ({variable}={static_data[variable]})')
-    plt.title('Scatter Plot of Polarization vs. Time')
-    plt.xlabel('Time')
-    plt.ylabel('Polarization')
+        plt.scatter(time, polarization, label=f'Polarizacion ({variable_name}={static_data[variable]:.2f})')
+    plt.xlabel('Tiempo')
+    plt.ylabel('Polarizacion')
     plt.grid(True)
     plt.legend()
     plt.show()
 
-def compare_polarizations(polarizations: [[]], static_datas: [{}], variable: str ,starting: int):
+
+def compare_polarizations(polarizations: [[]], static_datas: [{}], variable: str, starting: int, variable_name: str):
 
     avg_polarizations = []
     std_deviations = []
@@ -72,8 +96,8 @@ def compare_polarizations(polarizations: [[]], static_datas: [{}], variable: str
 
     plt.figure(figsize=(8, 6))
     plt.errorbar(parameters, avg_polarizations, yerr=std_deviations, fmt='o', color='red', ecolor='black', capsize=5)
-    plt.xlabel(variable)
-    plt.ylabel('Average Polarization')
+    plt.xlabel(variable_name)
+    plt.ylabel('Polarizacion promedio')
     plt.grid(True)
     plt.show()
 
