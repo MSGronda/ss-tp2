@@ -22,7 +22,7 @@ def calculate_polarization(particles: str, static_data: {}) -> []:
             x_sum, y_sum = 0, 0
         elif line.strip() != '':
             data = line.split(',')
-            angle = float(data[2])
+            angle = float(data[3])
 
             x_sum += np.cos(angle) * v
             y_sum += np.sin(angle) * v

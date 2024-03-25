@@ -100,6 +100,9 @@ public class OffLatticeSimulation {
         return v;
     }
 
+    public List<Particle> getParticles(){
+        return this.particles;
+    }
 
 
 

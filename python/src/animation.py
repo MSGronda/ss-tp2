@@ -69,15 +69,14 @@ def generate_video(particle_filename: str, static_data_filename: str, angle_colo
             continue
 
         data = line.split(',')
-        x = float(data[0])
-        y = float(data[1])
-        angle = float(data[2])
+        x = float(data[1])
+        y = float(data[2])
+        angle = float(data[3])
         prev_x.append(x)
         prev_y.append(y)
         prev_angle.append(angle)
 
     out.release()
-
 
 def calculate_line_color(dx, dy):
     angle1 = np.arctan2(dy, dx)
@@ -116,12 +115,12 @@ def generate_gif(particle_filename: str, static_data_filename: str):
             continue
 
         data = line.split(',')
-        x = float(data[0])
-        y = float(data[1])
+        x = float(data[1])
+        y = float(data[2])
         x_values.append(x)
         y_values.append(y)
 
-        angle = float(data[2])
+        angle = float(data[3])
         dx = velocity * np.cos(angle)
         dy = velocity * np.sin(angle)
 

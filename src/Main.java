@@ -7,22 +7,47 @@ import java.util.concurrent.BlockingQueue;
 
 public class Main {
     public static void main(String[] args) {
-        int n = 10;
+
+        int n = 30;
         double l = 5;
         double r = 0.4;
         double v = 0.1;
         double noiseAmplitude = 0.5;
         int epochs = 1000;
 
-        for(int i=0; i<25; i++){
-            n += 15;
+        long timestamp = System.currentTimeMillis();
+        writeStaticFile(n,l,r,v,noiseAmplitude, epochs, timestamp);
+        long timeTaken = runNormal(n,l,r,v,noiseAmplitude, epochs, timestamp);
+        System.out.println("Time taken: " + timeTaken/1000 + "s");
+    }
 
-            long timestamp = System.currentTimeMillis();
-            writeStaticFile(n,l,r,v,noiseAmplitude, epochs, timestamp);
+    public static long runSemiParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
 
-            long timeTaken = runSemiParallel(n,l,r,v, noiseAmplitude, epochs, timestamp);
-            System.out.println("Time taken: " + timeTaken/1000 + "s");
+        long start = System.currentTimeMillis();
+        OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
+
+        try (FileWriter writer = new FileWriter("./python/output-files/particle-movement-" + timestamp + ".txt")) {
+
+            writer.write(0 + ",\n");
+            for(Particle p : simulation.getParticles()){
+                writer.write(p.getId() + "," + p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
+            }
+
+            for (int i = 1; i <= epochs; i++) {
+                List<Particle> particles = simulation.simulateParallel();
+
+                writer.write(i + ",\n");
+                for(Particle p : particles){
+                    writer.write(p.getId() + "," + p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
+                }
+                writer.write("\n");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+
+        long end = System.currentTimeMillis();
+        return end - start;
     }
 
     public static void writeStaticFile(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp){
@@ -45,41 +70,23 @@ public class Main {
         OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
 
         try (FileWriter writer = new FileWriter("./python/output-files/particle-movement-" + timestamp + ".txt")) {
-            for (int i = 0; i < epochs; i++) {
-                List<Particle> particles = simulation.simulate();
-
-                writer.write(i + ",\n");
-                for( Particle p : particles) {
-                    writer.write(p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
-                }
-                writer.write("\n");
+            writer.write(0 + ",\n");
+            for(Particle p : simulation.getParticles()){
+                writer.write(p.getId() + "," + p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        long end = System.currentTimeMillis();
-        return end - start;
-    }
 
-    public static long runSemiParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
-
-        long start = System.currentTimeMillis();
-        OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
-
-        try (FileWriter writer = new FileWriter("./python/output-files/particle-movement-" + timestamp + ".txt")) {
-            for (int i = 0; i < epochs; i++) {
+            for (int i = 1; i <= epochs; i++) {
                 List<Particle> particles = simulation.simulateParallel();
 
                 writer.write(i + ",\n");
                 for(Particle p : particles){
-                    writer.write(p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
+                    writer.write(p.getId() + "," + p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
                 }
                 writer.write("\n");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
         long end = System.currentTimeMillis();
         return end - start;
     }
