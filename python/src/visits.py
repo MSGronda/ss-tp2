@@ -1,4 +1,6 @@
 import math
+from matplotlib import pyplot as plt
+from src.utils import get_static_data
 
 
 def in_visit_area(x: float, y: float, l: float, visit_area_radius: float):
@@ -80,3 +82,38 @@ def calculate_obc(position_filename: str, static_data: {}, visit_radius: float):
     visitors.pop(0)  # Elimino el primer falso epoch
 
     return visitors
+
+
+def visits_graph(particle_filename: str, static_data_filename: str, pbc: bool):
+    static_data = get_static_data(static_data_filename)
+    n = static_data['n']
+
+    if pbc:
+        visits = calculate_pbc(particle_filename, static_data, 0.5)
+    else:
+        visits = calculate_obc(particle_filename, static_data, 0.5)
+
+    accumulative_y = []
+    total = 0
+
+    for step in visits:
+        total += len(step)
+        if pbc:
+            accumulative_y.append(round((total/n)*100, 2))
+        else:
+            accumulative_y.append(total)
+
+    time_steps = range(1, len(accumulative_y) + 1)
+
+    plt.scatter(time_steps, accumulative_y)
+
+    plt.xlabel('Tiempo')
+    if pbc:
+        plt.ylabel('% de partículas que visitaron')
+    else:
+        plt.ylabel('Cantidad de visitas')
+
+    plt.grid(True)
+    plt.show()
+
+

@@ -1,6 +1,6 @@
 from src.polarization import *
 from src.animation import generate_video, generate_gif, generate_video_visits
-from src.visits import calculate_pbc, calculate_obc
+from src.visits import visits_graph
 
 
 def compare_and_graph_polarization():
@@ -32,8 +32,16 @@ def generate_gif_from_first():
     generate_gif(particle_files[0], static_files[0])
 
 
-if __name__ == '__main__':
+def generate_visits_graph(option: str):
     particle_files = get_all_files("../output-files/particle-movement")
     static_files = get_all_files("../output-files/static-data")
 
-    generate_video_visits(particle_files[0], static_files[0], False, 200, False, 0.5)
+    visits_graph(particle_files[0], static_files[0], option == "PBC")
+
+
+if __name__ == '__main__':
+    # particle_files = get_all_files("../output-files/particle-movement")
+    # static_files = get_all_files("../output-files/static-data")
+    #
+    # generate_video_visits(particle_files[0], static_files[0], False, 200, False, 0.5)
+    generate_visits_graph("OBC")
