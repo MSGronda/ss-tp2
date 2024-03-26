@@ -8,11 +8,11 @@ import java.util.concurrent.BlockingQueue;
 public class Main {
     public static void main(String[] args) {
 
-        int n = 30;
+        int n = 300;
         double l = 5;
-        double r = 0.4;
+        double r = 1;
         double v = 0.1;
-        double noiseAmplitude = 0.5;
+        double noiseAmplitude = 2;
         int epochs = 1000;
 
         long timestamp = System.currentTimeMillis();
