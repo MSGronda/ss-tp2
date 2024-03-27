@@ -1,4 +1,5 @@
 import csv
+import glob
 
 
 def get_static_data(file_name: str):
@@ -11,3 +12,8 @@ def get_static_data(file_name: str):
             value = int(row[1]) if row[1].isdigit() else float(row[1])
             data[key] = value
     return data
+
+
+def get_all_files(prefix: str) -> [str]:
+    pattern = f"{prefix}-*.txt"
+    return glob.glob(pattern)

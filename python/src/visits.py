@@ -1,6 +1,9 @@
+import concurrent.futures
 import math
+from functools import partial
+
 from matplotlib import pyplot as plt
-from src.utils import get_static_data
+from src.utils import get_static_data, get_all_files
 
 
 def in_visit_area(x: float, y: float, l: float, visit_area_radius: float):
@@ -117,3 +120,63 @@ def visits_graph(particle_filename: str, static_data_filename: str, pbc: bool):
     plt.show()
 
 
+def calculate_all_visits(pbc: bool):
+    particle_files = get_all_files("../output-files/particle-movement")
+    static_files = get_all_files("../output-files/static-data")
+
+    total_visits = []
+    static_data = []
+
+    partial_process_files = partial(process_files, pbc)
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        results = executor.map(partial_process_files, particle_files, static_files)
+
+        for data, t_visits in results:
+            static_data.append(data)
+            total_visits.append(t_visits)
+
+    return total_visits, static_data
+
+
+def process_files(pbc: bool, p, s):
+    data = get_static_data(s)
+    if pbc:
+        visits = calculate_pbc(p, data, 0.5)
+    else:
+        visits = calculate_obc(p, data, 0.5)
+    total_visits = calculate_total_visits(visits, data)
+    return data, total_visits
+
+
+def calculate_total_visits(visits: [], static_data: {}):
+    total_visits = 0
+    for step in visits:
+        total_visits += len(step)
+
+    return total_visits
+
+
+def compare_total_visits(total_visits: [], static_datas: [{}], variable: str, variable_name: str, pbc: bool):
+    parameters = []
+
+    for data in static_datas:
+        parameters.append(data[variable])
+
+    values = []
+    if pbc:
+        for index, visits in enumerate(total_visits):
+            print(index)
+            values.append(round((visits / static_datas[index]['n']) * 100))
+    else:
+        values = total_visits
+
+    plt.figure(figsize=(8, 6))
+    plt.errorbar(parameters, values, fmt='o', color='red', ecolor='black', capsize=5)
+    plt.xlabel(variable_name)
+    if pbc:
+        plt.ylabel('% de particulas que visitaron')
+    else:
+        plt.ylabel('Visitas totales')
+    plt.grid(True)
+    plt.show()

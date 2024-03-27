@@ -2,7 +2,7 @@ import concurrent.futures
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
-from src.utils import get_static_data
+from src.utils import get_static_data, get_all_files
 
 
 def calculate_polarization(particles: str, static_data: {}) -> []:
@@ -101,10 +101,6 @@ def compare_polarizations(polarizations: [[]], static_datas: [{}], variable: str
     plt.grid(True)
     plt.show()
 
-
-def get_all_files(prefix: str) -> [str]:
-    pattern = f"{prefix}-*.txt"
-    return glob.glob(pattern)
 
 
 

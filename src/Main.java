@@ -12,13 +12,19 @@ public class Main {
         double l = 5;
         double r = 1;
         double v = 0.1;
-        double noiseAmplitude = 2;
+        double noiseAmplitude = 0.0;
         int epochs = 1000;
 
-        long timestamp = System.currentTimeMillis();
-        writeStaticFile(n,l,r,v,noiseAmplitude, epochs, timestamp);
-        long timeTaken = runNormal(n,l,r,v,noiseAmplitude, epochs, timestamp);
-        System.out.println("Time taken: " + timeTaken/1000 + "s");
+
+//        writeStaticFile(n,l,r,v,noiseAmplitude, epochs, timestamp);
+//        long timeTaken = runNormal(n,l,r,v,noiseAmplitude, epochs, timestamp);
+//        System.out.println("Time taken: " + timeTaken/1000 + "s");
+        for( double i = 0; i <= 5.1 ; i+= 0.2){
+            long timestamp = System.currentTimeMillis();
+            double noise = (double) Math.round((noiseAmplitude + i) * 100) / 100;
+            writeStaticFile(n, l, r, v, noise, epochs, timestamp);
+            runNormal(n, l, r, v, noise, epochs, timestamp);
+        }
     }
 
     public static long runSemiParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
