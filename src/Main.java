@@ -1,11 +1,14 @@
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 
 public class Main {
+    private static String decimalFormat = "%.4f";
+
     public static void main(String[] args) {
 
         int n = 300;
@@ -15,48 +18,15 @@ public class Main {
         double noiseAmplitude = 0.0;
         int epochs = 1000;
 
-
-//        writeStaticFile(n,l,r,v,noiseAmplitude, epochs, timestamp);
-//        long timeTaken = runNormal(n,l,r,v,noiseAmplitude, epochs, timestamp);
-//        System.out.println("Time taken: " + timeTaken/1000 + "s");
-        for( double i = 0; i <= 5.1 ; i+= 0.2){
+        for(double i = 0; i <= 5.1 ; i+= 0.2){
             long timestamp = System.currentTimeMillis();
             double noise = (double) Math.round((noiseAmplitude + i) * 100) / 100;
             writeStaticFile(n, l, r, v, noise, epochs, timestamp);
-            runNormal(n, l, r, v, noise, epochs, timestamp);
+            runSemiParallel(n, l, r, v, noise, epochs, timestamp);
         }
     }
 
-    public static long runSemiParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
-
-        long start = System.currentTimeMillis();
-        OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
-
-        try (FileWriter writer = new FileWriter("./python/output-files/particle-movement-" + timestamp + ".txt")) {
-
-            writer.write(0 + ",\n");
-            for(Particle p : simulation.getParticles()){
-                writer.write(p.getId() + "," + p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
-            }
-
-            for (int i = 1; i <= epochs; i++) {
-                List<Particle> particles = simulation.simulateParallel();
-
-                writer.write(i + ",\n");
-                for(Particle p : particles){
-                    writer.write(p.getId() + "," + p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
-                }
-                writer.write("\n");
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        long end = System.currentTimeMillis();
-        return end - start;
-    }
-
-    public static void writeStaticFile(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp){
+    private static void writeStaticFile(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp){
         try(FileWriter writer = new FileWriter("./python/output-files/static-data-" + timestamp + ".txt")) {
             writer.write("n," + n + "\n");
             writer.write("v," + v+ "\n");
@@ -71,23 +41,19 @@ public class Main {
         }
     }
 
-    public static long runNormal(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
+
+
+    private static long runNormal(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
         long start = System.currentTimeMillis();
         OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
 
         try (FileWriter writer = new FileWriter("./python/output-files/particle-movement-" + timestamp + ".txt")) {
             writer.write(0 + ",\n");
-            for(Particle p : simulation.getParticles()){
-                writer.write(p.getId() + "," + p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
-            }
+            simulation.getParticles().forEach(p -> saveParticleData(p, writer));
 
             for (int i = 1; i <= epochs; i++) {
-                List<Particle> particles = simulation.simulateParallel();
-
                 writer.write(i + ",\n");
-                for(Particle p : particles){
-                    writer.write(p.getId() + "," + p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
-                }
+                simulation.simulate().forEach(p -> saveParticleData(p, writer));
                 writer.write("\n");
             }
         } catch (IOException e) {
@@ -97,7 +63,29 @@ public class Main {
         return end - start;
     }
 
-    public static long runParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
+    private static long runSemiParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
+
+        long start = System.currentTimeMillis();
+        OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
+
+        try (FileWriter writer = new FileWriter("./python/output-files/particle-movement-" + timestamp + ".txt")) {
+            writer.write(0 + ",\n");
+            simulation.getParticles().forEach(p -> saveParticleData(p, writer));
+
+            for (int i = 1; i <= epochs; i++) {
+                writer.write(i + ",\n");
+                simulation.simulateParallel().forEach(p -> saveParticleData(p, writer));
+                writer.write("\n");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        long end = System.currentTimeMillis();
+        return end - start;
+    }
+
+    private static long runParallel(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp) {
 
         long start = System.currentTimeMillis();
         OffLatticeSimulation simulation = new OffLatticeSimulation(n, l, r, v, noiseAmplitude);
@@ -106,6 +94,7 @@ public class Main {
         Thread thread = new Thread(task);
         thread.start();
 
+        task.writes.add(simulation.getParticles());
         for (int i = 0; i < epochs; i++) {
             List<Particle> particles = simulation.simulateParallel();
             task.writes.add(particles);
@@ -122,7 +111,16 @@ public class Main {
         return end - start;
     }
 
-    public static class IOThread implements Runnable {
+    private static void saveParticleData(Particle p, FileWriter writer) {
+        try{
+            writer.write(p.getId() + "," + String.format(decimalFormat, p.getPos().getX()) + "," + String.format(decimalFormat, p.getPos().getY()) + "," + String.format(decimalFormat, p.getAngle()) + "\n");
+        }
+        catch (IOException e){
+            System.out.println(e);
+        }
+    }
+
+    private static class IOThread implements Runnable {
         private final BlockingQueue<List<Particle>> writes = new ArrayBlockingQueue<>(20);// TODO: check
         private boolean finished = false;
         private final long timestamp;
@@ -136,14 +134,9 @@ public class Main {
 
             try (FileWriter writer = new FileWriter("./python/output-files/particle-movement-" + timestamp + ".txt")) {
                 while (!finished) {
-                    List<Particle> particles = writes.take();
-
                     writer.write(i + ",\n");
-                    for(Particle p : particles){
-                        writer.write(p.getPos().getX() + "," + p.getPos().getY() + "," + p.getAngle() + "\n");
-                    }
+                    writes.take().forEach(p -> saveParticleData(p, writer));
                     writer.write("\n");
-
                     i++;
                 }
             } catch (InterruptedException | IOException e) {
