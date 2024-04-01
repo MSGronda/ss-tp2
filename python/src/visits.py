@@ -120,6 +120,41 @@ def visits_graph(particle_filename: str, static_data_filename: str, pbc: bool):
     plt.show()
 
 
+def multiple_visits_graph(particle_filenames: [], static_data_filenames: [], pbc: bool, variable: str, variable_name: str):
+    for particle_filename, static_data_filename in zip(particle_filenames, static_data_filenames):
+        static_data = get_static_data(static_data_filename)
+        n = static_data['n']
+
+        if pbc:
+            visits = calculate_pbc(particle_filename, static_data, 0.5)
+        else:
+            visits = calculate_obc(particle_filename, static_data, 0.5)
+
+        accumulative_y = []
+        total = 0
+
+        for step in visits:
+            total += len(step)
+            if pbc:
+                accumulative_y.append(round((total/n)*100, 2))
+            else:
+                accumulative_y.append(total)
+
+        time_steps = range(1, len(accumulative_y) + 1)
+
+        plt.scatter(time_steps, accumulative_y, label=f'{variable_name}={static_data[variable]:.2f}')
+
+    plt.xlabel('Tiempo')
+    if pbc:
+        plt.ylabel('% de partículas que visitaron')
+    else:
+        plt.ylabel('Cantidad de visitas')
+
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
 def calculate_all_visits(pbc: bool):
     particle_files = get_all_files("../output-files/particle-movement")
     static_files = get_all_files("../output-files/static-data")
