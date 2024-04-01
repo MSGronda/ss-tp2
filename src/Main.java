@@ -2,6 +2,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -11,19 +12,22 @@ public class Main {
 
     public static void main(String[] args) {
 
-        int n = 300;
+        int n = 150;
         double l = 5;
-        double r = 1;
+        double r = 0.2;
         double v = 0.1;
-        double noiseAmplitude = 0.0;
+        double noiseAmplitude = 0;
         int epochs = 1000;
 
-        for(double i = 0; i <= 5.1 ; i+= 0.2){
+        for(double i = 0; i <= 5.1 ; i+= 0.25){
             long timestamp = System.currentTimeMillis();
             double noise = (double) Math.round((noiseAmplitude + i) * 100) / 100;
             writeStaticFile(n, l, r, v, noise, epochs, timestamp);
             runSemiParallel(n, l, r, v, noise, epochs, timestamp);
         }
+//        long timestamp = System.currentTimeMillis();
+//        writeStaticFile(n, l, r, v, noiseAmplitude, epochs, timestamp);
+//        runSemiParallel(n, l, r, v, noiseAmplitude, epochs, timestamp);
     }
 
     private static void writeStaticFile(int n, double l, double r, double v, double noiseAmplitude, int epochs, long timestamp){
@@ -113,7 +117,7 @@ public class Main {
 
     private static void saveParticleData(Particle p, FileWriter writer) {
         try{
-            writer.write(p.getId() + "," + String.format(decimalFormat, p.getPos().getX()) + "," + String.format(decimalFormat, p.getPos().getY()) + "," + String.format(decimalFormat, p.getAngle()) + "\n");
+            writer.write(p.getId() + "," + String.format(Locale.US, decimalFormat, p.getPos().getX()) + "," + String.format(Locale.US, decimalFormat, p.getPos().getY()) + "," + String.format(Locale.US, decimalFormat, p.getAngle()) + "\n");
         }
         catch (IOException e){
             System.out.println(e);
