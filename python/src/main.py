@@ -1,6 +1,6 @@
 from src.polarization import *
 from src.animation import generate_video, generate_gif, generate_video_visits
-from src.visits import visits_graph, calculate_all_visits, compare_total_visits
+from src.visits import visits_graph, calculate_all_visits, compare_total_visits, multiple_visits_graph
 
 
 def compare_and_graph_polarization():
@@ -48,9 +48,10 @@ def compare_and_graph_total_visits(type: str):
 
 
 if __name__ == '__main__':
-    # particle_files = get_all_files("../output-files/particle-movement")
-    # static_files = get_all_files("../output-files/static-data")
+    particle_files = get_all_files("../output-files/particle-movement")
+    static_files = get_all_files("../output-files/static-data")
     #
     # generate_video_visits(particle_files[0], static_files[0], False, 200, False, 0.5)
     #generate_visits_graph("OBC")
-    compare_and_graph_total_visits("OBC")
+    multiple_visits_graph(particle_files, static_files, False, 'n', 'Cantidad de agentes')
+    # compare_and_graph_total_visits("PBC")

@@ -2,6 +2,7 @@ import concurrent.futures
 import math
 from functools import partial
 
+import numpy as np
 from matplotlib import pyplot as plt
 from src.utils import get_static_data, get_all_files
 
@@ -196,18 +197,47 @@ def compare_total_visits(total_visits: [], static_datas: [{}], variable: str, va
     parameters = []
 
     for data in static_datas:
-        parameters.append(data[variable])
+        if not parameters.__contains__(data[variable]):
+            parameters.append(data[variable])
 
     values = []
-    if pbc:
-        for index, visits in enumerate(total_visits):
-            print(index)
-            values.append(round((visits / static_datas[index]['n']) * 100))
-    else:
-        values = total_visits
+    same_variable_values = []
+    std_deviations = []
+    variable_value = -1
+
+    for index, visits in enumerate(total_visits):
+        if variable_value == -1:
+            variable_value = static_datas[index][variable]
+            if pbc:
+                same_variable_values.append(round((visits / static_datas[index]['n']) * 100))
+            else:
+                same_variable_values.append(visits)
+
+        elif static_datas[index][variable] == variable_value:
+            if pbc:
+                same_variable_values.append(round((visits / static_datas[index]['n']) * 100))
+            else:
+                same_variable_values.append(visits)
+        else:
+            mean = np.mean(same_variable_values)
+            std_deviations.append(np.std(same_variable_values))
+            values.append(mean)
+
+            same_variable_values.clear()
+            if pbc:
+                same_variable_values.append(round((visits / static_datas[index]['n']) * 100))
+            else:
+                same_variable_values.append(visits)
+
+            variable_value = static_datas[index][variable]
+
+    # Una vez mas para el ultimo valor
+    mean = np.mean(same_variable_values)
+    std_deviations.append(np.std(same_variable_values))
+    values.append(mean)
 
     plt.figure(figsize=(8, 6))
-    plt.errorbar(parameters, values, fmt='o', color='red', ecolor='black', capsize=5)
+    plt.errorbar(parameters, values, yerr=std_deviations, fmt='o', color='red', ecolor='black', capsize=5)
     plt.xlabel(variable_name)
     if pbc:
         plt.ylabel('% de particulas que visitaron')
