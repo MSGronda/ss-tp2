@@ -156,6 +156,55 @@ def multiple_visits_graph(particle_filenames: [], static_data_filenames: [], pbc
     plt.show()
 
 
+def time_taken_to_percentage_pbc(particle_filenames: [], static_data_filenames: [], percentage_to_reach: int, variable: str, variable_name: str):
+    parameters = []
+
+    values = []
+    same_variable_time = []
+    std_deviations = []
+    variable_value = -1
+
+    for particle_filename, static_data_filename in zip(particle_filenames, static_data_filenames):
+        static_data = get_static_data(static_data_filename)
+        if not parameters.__contains__(static_data[variable]):
+            parameters.append(static_data[variable])
+
+        n = static_data['n']
+        visits = calculate_pbc(particle_filename, static_data, 0.5)
+
+        total = 0
+        for index, time_step in enumerate(visits):
+            total += len(time_step)
+            percentage = round((total/n) * 100, 2)
+            if percentage > percentage_to_reach:
+                if variable_value == -1:
+                    variable_value = static_data[variable]
+                    same_variable_time.append(index)
+                elif static_data[variable] == variable_value:
+                    same_variable_time.append(index)
+                else:
+                    mean = np.mean(same_variable_time)
+                    std_deviations.append(np.std(same_variable_time))
+                    values.append(mean)
+
+                    same_variable_time.clear()
+                    same_variable_time.append(index)
+                    variable_value = static_data[variable]
+
+                break
+
+    mean = np.mean(same_variable_time)
+    std_deviations.append(np.std(same_variable_time))
+    values.append(mean)
+
+    plt.figure(figsize=(8, 6))
+    plt.errorbar(parameters, values, yerr=std_deviations, fmt='o', color='red', ecolor='black', capsize=5)
+    plt.xlabel(variable_name)
+    plt.ylabel("Tiempo para alcanzar " + str(percentage_to_reach) + "%")
+    plt.grid(True)
+    plt.show()
+
+
 def calculate_all_visits(pbc: bool):
     particle_files = get_all_files("../output-files/particle-movement")
     static_files = get_all_files("../output-files/static-data")

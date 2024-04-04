@@ -16,14 +16,16 @@ public class Main {
         double l = 5;
         double r = 0.2;
         double v = 0.1;
-        double noiseAmplitude = 0;
+        double noiseAmplitude = 0.0;
         int epochs = 1000;
 
-        for(double i = 0; i <= 5.1 ; i+= 0.25){
-            long timestamp = System.currentTimeMillis();
-            double noise = (double) Math.round((noiseAmplitude + i) * 100) / 100;
-            writeStaticFile(n, l, r, v, noise, epochs, timestamp);
-            runSemiParallel(n, l, r, v, noise, epochs, timestamp);
+        for(double i = 0; i <= 5.1 ; i += 0.25){
+            for( int j = 0; j < 7 ; j++) {
+                long timestamp = System.currentTimeMillis();
+                double noise = (double) Math.round((noiseAmplitude + i) * 100) / 100;
+                writeStaticFile(n, l, r, v, noise, epochs, timestamp);
+                runSemiParallel(n, l, r, v, noise, epochs, timestamp);
+            }
         }
 //        long timestamp = System.currentTimeMillis();
 //        writeStaticFile(n, l, r, v, noiseAmplitude, epochs, timestamp);
